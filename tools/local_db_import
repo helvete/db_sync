@@ -1,0 +1,62 @@
+#!/bin/bash
+DIR="`dirname $0`"       #Compute a full path name to this script
+DIR=${DIR%\/}            #Strip off trailing slash
+DIR=${DIR/\/\/\//\/}     #Reduce any initial /// to /
+DBCRED="$DIR/DBCRED"
+
+FILE_NAME="db_dump"
+
+echo Reading DB credentials
+if [ ! -f "$DBCRED" ];
+then
+	echo ERROR: Missing env file: "$DBCRED"
+	exit 2;
+fi
+echo Loading DB credentials
+. $DBCRED
+
+# parse more schemata provided as CSV into "-n schema1 -n schema2" format
+SCHEMA_CLAUSE=''
+while IFS=',' read -ra ADDR; do
+	for SCHEMA in "${ADDR[@]}"; do
+		SCHEMA_CLAUSE="$SCHEMA_CLAUSE -n $SCHEMA";
+	done
+done <<< "$SOURCE_PG_SCHEMA"
+
+echo Creating a dump of the source DB schema $SOURCE_PG_SCHEMA
+PGPASSWORD=$SOURCE_PG_PASSWORD pg_dump -h $SOURCE_PG_HOST -p $SOURCE_PG_PORT -U $SOURCE_PG_USER $SCHEMA_CLAUSE -O -x $SOURCE_PG_DATABASE > $DIR/$FILE_NAME-$SOURCE_PG_SCHEMA.sql
+EXIT_CODE=$?
+if [ $EXIT_CODE -ne 0 ]; then
+	echo ERROR: Unable to dump the DB schema $SOURCE_PG_SCHEMA
+	exit $EXIT_CODE
+fi
+
+if [ ! -f "$DIR/$FILE_NAME-$SOURCE_PG_SCHEMA.sql" ]; then
+	echo ERROR: Unable to load the DB dump
+	exit 3
+fi
+
+echo Backing up the dump file to $DIR/$FILE_NAME-$SOURCE_PG_SCHEMA-backup.sql
+cp $DIR/$FILE_NAME-$SOURCE_PG_SCHEMA.sql $DIR/$FILE_NAME-$SOURCE_PG_SCHEMA-backup.sql
+EXIT_CODE=$?
+if [ $EXIT_CODE -ne 0 ]; then
+	echo WARNING: Unable to backup the DB dump
+	echo going on...
+fi
+
+echo Deleting data from the target DB
+PGPASSWORD=$TARGET_PG_PASSWORD psql -U $TARGET_PG_USER -h $TARGET_PG_HOST -p $TARGET_PG_PORT -d $TARGET_PG_DATABASE -c "DROP SCHEMA IF EXISTS $TARGET_PG_SCHEMA CASCADE;"
+EXIT_CODE=$?
+if [ $EXIT_CODE -ne 0 ]; then
+	echo ERROR: Unable to drop schema $TARGET_PG_SCHEMA
+	exit $EXIT_CODE
+fi
+
+echo Importing the dump to the target DB
+PGPASSWORD=$TARGET_PG_PASSWORD psql -U $TARGET_PG_USER -h $TARGET_PG_HOST -p $TARGET_PG_PORT -d $TARGET_PG_DATABASE < $DIR/$FILE_NAME-$SOURCE_PG_SCHEMA.sql
+EXIT_CODE=$?
+if [ $EXIT_CODE -ne 0 ]; then
+	echo ERROR: Unable to import a DB dump
+fi
+
+exit $EXIT_CODE
