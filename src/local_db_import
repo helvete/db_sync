@@ -1,7 +1,8 @@
 #!/bin/bash
-DIR="`dirname $0`"       #Compute a full path name to this script
-DIR=${DIR%\/}            #Strip off trailing slash
-DIR=${DIR/\/\/\//\/}     #Reduce any initial /// to /
+DIR="`dirname $0`"       # compute a full path name to this script
+DIR=${DIR%\/}            # strip off trailing slash
+DIR=${DIR/\/\/\//\/}     # reduce any initial /// to /
+
 DBCRED="$DIR/DBCRED"
 
 FILE_NAME="db_dump"
@@ -31,11 +32,11 @@ while IFS=',' read -ra ADDR; do
 	done
 done <<< "$SOURCE_PG_SCHEMA"
 
-echo Creating a dump of the source DB schema $SOURCE_PG_SCHEMA
+echo Creating a dump of the source DB schemata $SOURCE_PG_SCHEMA
 PGPASSWORD=$SOURCE_PG_PASSWORD pg_dump -h $SOURCE_PG_HOST -p $SOURCE_PG_PORT -U $SOURCE_PG_USER $SCHEMA_CLAUSE -O -x $SOURCE_PG_DATABASE > $DIR/$FILE_NAME-$SOURCE_PG_SCHEMA.sql
 EXIT_CODE=$?
 if [ $EXIT_CODE -ne 0 ]; then
-	echo ERROR: Unable to dump the DB schema $SOURCE_PG_SCHEMA
+	echo ERROR: Unable to dump the DB schemata $SOURCE_PG_SCHEMA
 	exit $EXIT_CODE
 fi
 
