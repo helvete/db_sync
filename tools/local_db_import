@@ -15,11 +15,19 @@ fi
 echo Loading DB credentials
 . $DBCRED
 
-# parse more schemata provided as CSV into "-n schema1 -n schema2" format
+# parse more schemata provided as CSV into " -n schema1 -n schema2" format
+# also keep 'public' schema from dropping - pg_dump will not create it
 SCHEMA_CLAUSE=''
+SCHEMATA_TO_DELETE=''
 while IFS=',' read -ra ADDR; do
 	for SCHEMA in "${ADDR[@]}"; do
 		SCHEMA_CLAUSE="$SCHEMA_CLAUSE -n $SCHEMA";
+		if [[ $SCHEMA != "public" ]]; then
+			if [[ $SCHEMATA_TO_DELETE != '' ]]; then
+				SCHEMATA_TO_DELETE="$SCHEMATA_TO_DELETE,"
+			fi
+			SCHEMATA_TO_DELETE="$SCHEMATA_TO_DELETE$SCHEMA"
+		fi
 	done
 done <<< "$SOURCE_PG_SCHEMA"
 
@@ -45,10 +53,10 @@ if [ $EXIT_CODE -ne 0 ]; then
 fi
 
 echo Deleting data from the target DB
-PGPASSWORD=$TARGET_PG_PASSWORD psql -U $TARGET_PG_USER -h $TARGET_PG_HOST -p $TARGET_PG_PORT -d $TARGET_PG_DATABASE -c "DROP SCHEMA IF EXISTS $TARGET_PG_SCHEMA CASCADE;"
+PGPASSWORD=$TARGET_PG_PASSWORD psql -U $TARGET_PG_USER -h $TARGET_PG_HOST -p $TARGET_PG_PORT -d $TARGET_PG_DATABASE -c "DROP SCHEMA IF EXISTS $SCHEMATA_TO_DELETE CASCADE;"
 EXIT_CODE=$?
 if [ $EXIT_CODE -ne 0 ]; then
-	echo ERROR: Unable to drop schema $TARGET_PG_SCHEMA
+	echo ERROR: Unable to drop schemata $SCHEMATA_TO_DELETE
 	exit $EXIT_CODE
 fi
 

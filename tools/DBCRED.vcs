@@ -3,11 +3,10 @@ SOURCE_PG_DATABASE=db_portal
 SOURCE_PG_USER=user-having-db-dumping-privileges
 SOURCE_PG_HOST=db-server-host
 SOURCE_PG_PORT=5432
-SOURCE_PG_SCHEMA=schema-to-dump
+SOURCE_PG_SCHEMA=csv-schemata-to-dump
 
 TARGET_PG_PASSWORD=local-db-password
 TARGET_PG_DATABASE=local-db-name
 TARGET_PG_USER=local-db-user-name
 TARGET_PG_HOST=127.0.0.1
 TARGET_PG_PORT=5432
-TARGET_PG_SCHEMA=schema-to-import
