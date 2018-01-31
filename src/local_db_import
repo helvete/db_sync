@@ -17,7 +17,7 @@ echo Loading DB credentials
 . $DBCRED
 
 # parse more schemata provided as CSV into " -n schema1 -n schema2" format
-# also keep 'public' schema from dropping - pg_dump will not create it
+# also detect whether $DEFAULT_SCHEMA is being imported and forcerecreate it if so
 SCHEMA_CLAUSE=''
 SCHEMA_PUBLIC_PROCESSING=0
 while IFS=',' read -ra ADDR; do
