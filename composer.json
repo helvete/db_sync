@@ -1,0 +1,12 @@
+{
+	"name": "helvete/db_sync",
+	"type": "shell-script",
+	"description": "DB content sync tool",
+	"license": ["MIT"],
+	"authors": [
+		{
+			"name": "helvete"
+		}
+	],
+    "bin": ["./src/local_db_import"]
+}
