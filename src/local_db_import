@@ -10,7 +10,7 @@ DEFAULT_SCHEMA="public"
 echo Reading DB credentials
 if [ ! -f "$DBCRED" ];
 then
-	echo ERROR: Missing env file: "$DBCRED"
+	echo ERROR: Missing DBCRED file: "$DBCRED"
 	exit 2;
 fi
 echo Loading DB credentials
@@ -29,25 +29,21 @@ while IFS=',' read -ra ADDR; do
 	done
 done <<< "$SOURCE_PG_SCHEMA"
 
-echo Creating a dump of the source DB schemata $SOURCE_PG_SCHEMA
-PGPASSWORD=$SOURCE_PG_PASSWORD pg_dump --encoding utf8 -h $SOURCE_PG_HOST -p $SOURCE_PG_PORT -U $SOURCE_PG_USER $SCHEMA_CLAUSE -O -x $SOURCE_PG_DATABASE > $DIR/$FILE_NAME-$SOURCE_PG_SCHEMA.sql
-EXIT_CODE=$?
-if [ $EXIT_CODE -ne 0 ]; then
-	echo ERROR: Unable to dump the DB schemata $SOURCE_PG_SCHEMA
-	exit $EXIT_CODE
-fi
-
-if [ ! -f "$DIR/$FILE_NAME-$SOURCE_PG_SCHEMA.sql" ]; then
-	echo ERROR: Unable to load the DB dump
-	exit 3
-fi
-
-echo Backing up the dump file to $DIR/$FILE_NAME-$SOURCE_PG_SCHEMA-backup.sql
-cp $DIR/$FILE_NAME-$SOURCE_PG_SCHEMA.sql $DIR/$FILE_NAME-$SOURCE_PG_SCHEMA-backup.sql
-EXIT_CODE=$?
-if [ $EXIT_CODE -ne 0 ]; then
-	echo WARNING: Unable to backup the DB dump
-	echo going on...
+if [ ! -f "$DIR/$FILE_NAME-$SOURCE_PG_SCHEMA.sql" ];
+then
+    echo Creating a dump of the source DB schemata $SOURCE_PG_SCHEMA
+    PGPASSWORD=$SOURCE_PG_PASSWORD pg_dump --encoding utf8 -h $SOURCE_PG_HOST -p $SOURCE_PG_PORT -U $SOURCE_PG_USER $SCHEMA_CLAUSE -O -x \
+        --exclude-table-data=form_service.wso_log \
+        --exclude-table-data=b2b.log \
+        --exclude-table-data=b2b.profile_export_tmp \
+        $SOURCE_PG_DATABASE > $DIR/$FILE_NAME-$SOURCE_PG_SCHEMA.sql
+    EXIT_CODE=$?
+    if [ $EXIT_CODE -ne 0 ]; then
+	    echo ERROR: Unable to dump the DB schemata $SOURCE_PG_SCHEMA
+	    exit $EXIT_CODE
+    fi
+else
+	echo INFO: Already got fresh dump
 fi
 
 echo Deleting data from the target DB
@@ -62,6 +58,8 @@ if [ $EXIT_CODE -ne 0 ]; then
 	echo ERROR: Unable to drop schemata $SOURCE_PG_SCHEMA
 	exit $EXIT_CODE
 fi
+
+echo 'SET ROLE portal_grp;' | cat - $DIR/$FILE_NAME-$SOURCE_PG_SCHEMA.sql > /tmp/intermediate && mv /tmp/intermediate $DIR/$FILE_NAME-$SOURCE_PG_SCHEMA.sql
 
 echo Importing the dump to the target DB
 PGPASSWORD=$TARGET_PG_PASSWORD psql -U $TARGET_PG_USER -h $TARGET_PG_HOST -p $TARGET_PG_PORT -d $TARGET_PG_DATABASE < $DIR/$FILE_NAME-$SOURCE_PG_SCHEMA.sql
