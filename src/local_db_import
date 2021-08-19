@@ -66,8 +66,9 @@ if [ $EXIT_CODE -ne 0 ]; then
 	exit $EXIT_CODE
 fi
 
-if [ ! -z "${TARGET_PG_GROUP_ROLE}" ];
-echo "SET ROLE ${TARGET_PG_GROUP_ROLE};" | cat - $DIR/$FILE_NAME-$SOURCE_PG_SCHEMA.sql > /tmp/intermediate && mv /tmp/intermediate $DIR/$FILE_NAME-$SOURCE_PG_SCHEMA.sql
+if [ ! -z "${TARGET_PG_GROUP_ROLE}" ]; then
+    echo "SET ROLE ${TARGET_PG_GROUP_ROLE};" | cat - $DIR/$FILE_NAME-$SOURCE_PG_SCHEMA.sql > /tmp/intermediate && mv /tmp/intermediate $DIR/$FILE_NAME-$SOURCE_PG_SCHEMA.sql
+fi
 
 echo Importing the dump to the target DB
 PGPASSWORD=$TARGET_PG_PASSWORD psql -U $TARGET_PG_USER -h $TARGET_PG_HOST -p $TARGET_PG_PORT -d $TARGET_PG_DATABASE < $DIR/$FILE_NAME-$SOURCE_PG_SCHEMA.sql
