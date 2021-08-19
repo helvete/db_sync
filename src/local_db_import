@@ -33,9 +33,16 @@ if [ ! -f "$DIR/$FILE_NAME-$SOURCE_PG_SCHEMA.sql" ];
 then
     echo Creating a dump of the source DB schemata $SOURCE_PG_SCHEMA
     PGPASSWORD=$SOURCE_PG_PASSWORD pg_dump --encoding utf8 -h $SOURCE_PG_HOST -p $SOURCE_PG_PORT -U $SOURCE_PG_USER $SCHEMA_CLAUSE -O -x \
-        --exclude-table-data=form_service.wso_log \
+        --exclude-table-data=b2b.application_log \
+        --exclude-table-data=b2b.counseling_operation \
+        --exclude-table-data=b2b.history \
         --exclude-table-data=b2b.log \
+        --exclude-table-data=b2b.profile_export \
+        --exclude-table-data=b2b.profile_export_pod \
         --exclude-table-data=b2b.profile_export_tmp \
+        --exclude-table-data=b2b.user_ic_export \
+        --exclude-table-data=b2b.users_eon_egd_bc \
+        --exclude-table-data=form_service.wso_log \
         $SOURCE_PG_DATABASE > $DIR/$FILE_NAME-$SOURCE_PG_SCHEMA.sql
     EXIT_CODE=$?
     if [ $EXIT_CODE -ne 0 ]; then
