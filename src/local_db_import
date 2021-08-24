@@ -43,6 +43,18 @@ then
         --exclude-table-data=b2b.user_ic_export \
         --exclude-table-data=b2b.users_eon_egd_bc \
         --exclude-table-data=form_service.wso_log \
+        --exclude-table-data=energie24.counseling_operation \
+        --exclude-table-data=energie24.leady_log \
+        --exclude-table-data=energie24.log \
+        --exclude-table-data=energie24.odhad_vyuctovani_historie \
+        --exclude-table-data=energie24.profiler_log \
+        --exclude-table-data=energie24.uzivatel_historie \
+        --exclude-table-data=energie24.uzivatel_obchodni_partneri_bckp \
+        --exclude-table-data=energie24.uzivatel_obchodni_partneri_bu \
+        --exclude-table-data=energie24.uzivatel_obchodni_partneri_flatten \
+        --exclude-table-data=energie24.uzivatel_zpravy \
+        --exclude-table-data=energie24.uzivatele_eon_egd_bc \
+        --exclude-table-data=energie24.uzivatele_modalni_okna \
         $SOURCE_PG_DATABASE > $DIR/$FILE_NAME-$SOURCE_PG_SCHEMA.sql
     EXIT_CODE=$?
     if [ $EXIT_CODE -ne 0 ]; then
